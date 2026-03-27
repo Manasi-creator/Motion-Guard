@@ -1,0 +1,35 @@
+# Node modules
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+backend/venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env.local
+
+# Logs
+*.log
+
+# VSCode
+.vscode/
+
+# Next.js
+frontend/.next/
+
+# Python seed file (has no sensitive data but not needed on GitHub)
+backend/seed.py

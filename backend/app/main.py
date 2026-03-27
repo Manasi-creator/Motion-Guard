@@ -1462,3 +1462,32 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
+@app.post("/api/sensor-data")
+async def receive_sensor_data(data: dict, current_user: dict = Depends(get_current_user)):
+    db = get_database()
+    data["timestamp"] = datetime.utcnow()
+    await db.sensor_data.insert_one(data)
+    
+    # Trigger alert if needed
+    if data.get("alert"):
+        await db.alerts.insert_one({
+            "patient_id": data["patient_id"],
+            "severity": "CRITICAL",
+            "alert_type": "Tremor Alert",
+            "message": f"High tremor detected - {data.get('disease')} - {data.get('tremorFreq')} Hz",
+            "timestamp": data["timestamp"],
+            "status": "Pending"
+        })
+    
+    return {"status": "ok"}
+
+@app.get("/api/sensor-data/{patient_id}")
+async def get_sensor_data(patient_id: str, current_user: dict = Depends(get_current_user)):
+    db = get_database()
+    data = await db.sensor_data.find(
+        {"patient_id": patient_id}
+    ).sort("timestamp", -1).limit(50).to_list(50)
+    for d in data:
+        d["_id"] = str(d["_id"])
+    return data

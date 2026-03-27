@@ -7,12 +7,12 @@ import time
 # Windows: COM3, COM4, etc. (check Arduino IDE bottom right)
 # Mac/Linux: /dev/ttyUSB0 or /dev/ttyACM0
 SERIAL_PORT = 'COM3'
-BAUD_RATE = 9600
+BAUD_RATE = 115200
 BACKEND_URL = 'http://localhost:8000'
 PATIENT_ID = '8821'  # Change to your patient's ID
 
 def parse_line(line):
-    """Parse: AccX: 2140 | AccY: 3112 | TremorFreq: 2 Hz | Disease: Parkinson's | IR: 0 | Finger: NO | Sound: 1"""
+    """Parses: AccX: 2140 | AccY: 3112 | TremorFreq: 2 Hz | Disease: Normal | BPM: 72 | SpO2: 98.0 % | Sound: 1"""
     try:
         data = {}
         parts = line.strip().split('|')
@@ -21,36 +21,43 @@ def parse_line(line):
                 key, value = part.strip().split(':', 1)
                 data[key.strip()] = value.strip()
         return data
-    except:
+    except Exception as e:
         return None
 
 def send_to_backend(parsed_data, token):
     try:
+        # Clean the strings into numbers
+        bpm = parsed_data.get("BPM", "0")
+        spo2 = parsed_data.get("SpO2", "0").replace(" %", "")
+        tremor = parsed_data.get("TremorFreq", "0").replace(" Hz", "")
+
         payload = {
             "patient_id": PATIENT_ID,
             "accX": float(parsed_data.get("AccX", 0)),
             "accY": float(parsed_data.get("AccY", 0)),
-            "tremorFreq": parsed_data.get("TremorFreq", "0 Hz").replace(" Hz", ""),
+            "tremorFreq": float(tremor),
             "disease": parsed_data.get("Disease", "Unknown"),
-            "ir": int(parsed_data.get("IR", 0)),
-            "finger": parsed_data.get("Finger", "NO"),
+            "bpm": int(float(bpm)), # Handle heart rate
+            "spo2": float(spo2),    # Handle oxygen
             "sound": int(parsed_data.get("Sound", 0)),
-            "alert": "ALERT" in line
+            "alert": "ALERT" in line or "EXTREME" in line
         }
+        
         headers = {"Authorization": f"Bearer {token}"}
         response = requests.post(
-            f"{BACKEND_URL}/api/sensor-data",
-            json=payload,
-            headers=headers
+            f"{BACKEND_URL}/api/sensor-data", 
+            json=payload, 
+            headers=headers,
+            timeout=2
         )
-        print(f"Sent: {response.status_code}")
+        print(f"Sent Data! Status: {response.status_code} | BPM: {bpm} | SpO2: {spo2}")
     except Exception as e:
-        print(f"Error sending: {e}")
+        print(f"Error sending to backend: {e}")
 
 def get_token():
     response = requests.post(f"{BACKEND_URL}/api/auth/login", json={
-        "email": "doctor@motionguard.ai",
-        "password": "demo123",
+        "email": "demo.doctor@motionguard.ai",
+        "password": "demo12345",
         "role": "Doctor"
     })
     return response.json().get("access_token")

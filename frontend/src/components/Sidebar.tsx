@@ -65,6 +65,11 @@ const baseNavItems: NavItem[] = [
       </svg>
     ),
   },
+  { 
+    name: 'Arduino Monitor',
+    href: '/arduino-monitor',  
+    icon: '🔌' 
+  }
 ];
 
 const bottomItems: NavItem[] = [

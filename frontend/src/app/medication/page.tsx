@@ -11,7 +11,7 @@ export default function MedicationPage() {
   const [medications, setMedications] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [adherence, setAdherence] = useState<any[]>([]);
-  const [currentMonth] = useState('October 2023');
+  const [currentMonth] = useState('March 2026');
 
   useEffect(() => {
     apiFetch('/api/medications?patient_id=8821').then(setMedications).catch(() => {

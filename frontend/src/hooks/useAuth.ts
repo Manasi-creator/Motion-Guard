@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 
+const API = 'http://localhost:8000';
+
 export interface User {
   id?: string;
   email: string;
@@ -75,8 +77,9 @@ export const useAuth = () => {
         ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       };
-
-      const response = await fetch(url, { ...options, headers });
+      // Add base URL if url starts with /api
+      const fullUrl = url.startsWith('/api') ? `http://localhost:8000${url}` : url;
+      const response = await fetch(fullUrl, { ...options, headers });
       return response;
     },
     [getToken]
